@@ -13,6 +13,16 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+// ตรวจสอบการลบข้อมูล
+if (isset($_POST['delete'])) {
+    $delete_id = $_POST['delete_id'];
+    $delete_sql = "DELETE FROM tb_borrow_book WHERE b_id = '$delete_id'";
+    if ($conn->query($delete_sql) === TRUE) {
+    } else {
+        echo "Error: " . $conn->error;
+    }
+}
+
 // ตรวจสอบการค้นหา
 $search_query = "";
 if (isset($_POST['search'])) {
@@ -28,7 +38,6 @@ if (isset($_POST['search'])) {
 }
 
 $result = $conn->query($sql);
-
 ?>
 
 <!DOCTYPE html>
@@ -152,6 +161,7 @@ $result = $conn->query($sql);
     <form method="POST" action="">
         <input type="text" name="search_query" placeholder="ค้นหาตามชื่อหนังสือ หรือชื่อผู้ยืม-คืน" value="<?php echo htmlspecialchars($search_query); ?>">
         <button type="submit" name="search">ค้นหา</button>
+        <button type="submit" name="clear">ล้างการค้นหา</button>
     </form>
     
     <table>
@@ -162,6 +172,7 @@ $result = $conn->query($sql);
                 <th>รหัสหนังสือ</th>
                 <th>ชื่อผู้ใช้</th>
                 <th>ค่าปรับ</th>
+                <th>การกระทำ</th>
             </tr>
         </thead>
         <tbody>
@@ -174,10 +185,16 @@ $result = $conn->query($sql);
                     echo "<td>" . $row["b_id"] . "</td>";
                     echo "<td>" . $row["m_user"] . "</td>";
                     echo "<td>" . $row["br_fine"] . "</td>";
+                    echo "<td>
+                            <form method='POST' action='' style='display:inline;'>
+                                <input type='hidden' name='delete_id' value='" . $row["b_id"] . "'>
+                                <button type='submit' name='delete'>ลบ</button>
+                            </form>
+                          </td>";
                     echo "</tr>";
                 }
             } else {
-                echo "<tr><td colspan='5'>ไม่มีข้อมูล</td></tr>";
+                echo "<tr><td colspan='6'>ไม่มีข้อมูล</td></tr>";
             }
             ?>
         </tbody>

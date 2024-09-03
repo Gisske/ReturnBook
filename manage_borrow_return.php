@@ -76,7 +76,7 @@ if (isset($_POST['return'])) {
 if (isset($_POST['search'])) {
     $search_b_id = $conn->real_escape_string($_POST['search_b_id']);
     
-    // ตรวจสอบว่ามีข้อมูลหนังสือที่ต้องการคืนในฐานข้อมูลหรือไม่
+    // ตรวจสอบว่ามีข้อมูลหนังสือที่กำลังยืมอยู่ในฐานข้อมูลหรือไม่
     $sql = "SELECT * FROM tb_borrow_book WHERE b_id = '$search_b_id' AND br_date_rt = '0000-00-00'";
     $result = $conn->query($sql);
     
@@ -85,24 +85,7 @@ if (isset($_POST['search'])) {
             $details[] = $row;
         }
     } else {
-        $details[] = ['message' => 'ไม่พบข้อมูลการยืมหนังสือที่ค้นหา'];
-    }
-}
-
-// การค้นหาข้อมูลการคืนหนังสือ
-if (isset($_POST['search'])) {
-    $search_b_id = $conn->real_escape_string($_POST['search_b_id']);
-    
-    // ตรวจสอบว่ามีข้อมูลหนังสือที่ต้องการคืนในฐานข้อมูลหรือไม่
-    $sql = "SELECT * FROM tb_borrow_book WHERE b_id = '$search_b_id' AND br_date_rt = '0000-00-00'";
-    $result = $conn->query($sql);
-    
-    if ($result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            $details[] = $row;
-        }
-    } else {
-        $details[] = ['message' => 'ไม่พบข้อมูลการยืมหนังสือที่ค้นหา'];
+        $details[] = ['message' => 'ไม่พบข้อมูลหนังสือที่ถูกยืมอยู่'];
     }
 } else {
     $details[] = ['message' => 'โปรดระบุข้อมูลที่ต้องการค้นหา'];
@@ -222,147 +205,8 @@ $conn->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Borrowing and Returning</title>
+    <link rel="stylesheet" href="css.css">
     <style>
-        body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f4f4f9;
-    color: #333;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-}
-
-h1 {
-    background-color: #007BFF;
-    color: white;
-    text-align: center;
-    padding: 15px 0;
-    margin: 0;
-    width: 100%;
-}
-
-h2 {
-    color: #007BFF;
-}
-
-button {
-    background-color: #007BFF;
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    margin: 10px;
-    cursor: pointer;
-    border-radius: 5px;
-    font-size: 16px;
-    transition: background-color 0.3s;
-}
-
-button:hover {
-    background-color: #0056b3;
-}
-
-form {
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    margin: 20px;
-    max-width: 600px;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-    color: #333;
-}
-
-input[type="text"] {
-    width: calc(100% - 22px);
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 16px;
-}
-
-input[type="submit"] {
-    background-color: #007BFF;
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    cursor: pointer;
-    border-radius: 5px;
-    font-size: 16px;
-    transition: background-color 0.3s;
-}
-
-input[type="submit"]:hover {
-    background-color: #0056b3;
-}
-
-.message {
-    color: #d9534f;
-    font-size: 16px;
-    margin: 20px;
-    text-align: center;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 20px 0;
-}
-
-th, td {
-    padding: 10px;
-    text-align: left;
-    border: 1px solid #ddd;
-}
-
-th {
-    background-color: #007BFF;
-    color: white;
-}
-
-tr:nth-child(even) {
-    background-color: #f2f2f2;
-}
-
-tr:hover {
-    background-color: #ddd;
-}
-
-.error {
-    color: #d9534f;
-    font-size: 14px;
-}
-
-.back-button {
-    display: inline-block;
-    background-color: #007BFF;
-    color: white;
-    text-align: center;
-    padding: 10px 20px;
-    margin: 10px;
-    text-decoration: none;
-    border-radius: 5px;
-    font-size: 16px;
-    transition: background-color 0.3s;
-}
-
-.back-button:hover {
-    background-color: #0056b3;
-}
-
-
     </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script>
@@ -485,19 +329,24 @@ tr:hover {
     </form>
 
     <?php if (!empty($details)) { ?>
-        <h3>ข้อมูลการคืนหนังสือ</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>รหัสหนังสือ</th>
-                    <th>รหัสผู้ใช้</th>
-                    <th>วันที่ยืม</th>
-                    <th>วันที่คืน</th>
-                    <th>ค่าปรับ</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($details as $detail) { ?>
+    <h3>ข้อมูลการคืนหนังสือ</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>รหัสหนังสือ</th>
+                <th>รหัสผู้ใช้</th>
+                <th>วันที่ยืม</th>
+                <th>วันที่คืน</th>
+                <th>ค่าปรับ</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($details as $detail) { ?>
+                <?php if (isset($detail['message'])) { ?>
+                    <tr>
+                        <td colspan="5"><?php echo $detail['message']; ?></td>
+                    </tr>
+                <?php } else { ?>
                     <tr>
                         <td><?php echo $detail['b_id']; ?></td>
                         <td><?php echo $detail['m_user']; ?></td>
@@ -506,9 +355,10 @@ tr:hover {
                         <td><?php echo $detail['br_fine']; ?></td>
                     </tr>
                 <?php } ?>
-            </tbody>
-        </table>
-    <?php } ?>
+            <?php } ?>
+        </tbody>
+    </table>
+<?php } ?>
 </body>
 </html>
 
